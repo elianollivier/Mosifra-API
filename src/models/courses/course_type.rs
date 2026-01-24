@@ -24,3 +24,26 @@ impl CourseType {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_course_type_to_sql() {
+		assert_eq!(CourseType::Info.to_sql(), 1);
+	}
+
+	#[test]
+	fn test_course_type_from_sql_valid() {
+		let result = CourseType::from_sql(1);
+		assert!(result.is_ok());
+		assert_eq!(result.unwrap(), CourseType::Info);
+	}
+
+	#[test]
+	fn test_course_type_from_sql_invalid() {
+		let result = CourseType::from_sql(999);
+		assert!(result.is_err());
+	}
+}

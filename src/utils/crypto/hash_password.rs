@@ -19,3 +19,23 @@ pub fn hash_password(password: &str) -> Result<String, Status> {
 
 	Ok(password_hash)
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_hash_password_returns_hash() {
+		let result = hash_password("testpassword123");
+		assert!(result.is_ok());
+		let hash = result.unwrap();
+		assert!(hash.starts_with("$argon2"));
+	}
+
+	#[test]
+	fn test_hash_password_different_each_time() {
+		let hash1 = hash_password("samepassword").unwrap();
+		let hash2 = hash_password("samepassword").unwrap();
+		assert_ne!(hash1, hash2);
+	}
+}
