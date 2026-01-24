@@ -115,47 +115,34 @@ impl<'r> FromRequest<'r> for AuthGuard {
 
 	async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
 		let auth_header = request.headers().get_one("Authorization");
-		match auth_header {
-			Some(header) if header.starts_with("Bearer ") => {
-				let jwt = header.trim_start_matches("Bearer ");
-				if validate_jwt(jwt) {
-					let auth_guard = match Self::from_raw_jwt(jwt) {
-						Ok(auth_guard) => auth_guard,
-						Err(e) => {
-							return Outcome::Error((
-								Status::InternalServerError,
-								format!(
-									"Error while getting the jwt information (Should be impossible ?) : {e}"
-								),
-							));
-						}
-					};
-					if auth_guard.user_type == UserType::Admin {
-						Outcome::Success(auth_guard) // NOT GOOD BUT WILL DO FOR TESTING
-					} else {
-						let session_exist = match session_exist(&auth_guard.session_id) {
-							Ok(session_exist) => session_exist,
-							Err(e) => {
-								return Outcome::Error((
-									e,
-									"Error while checking session".to_string(),
-								));
-							}
-						};
-						if session_exist {
-							Outcome::Success(auth_guard)
-						} else {
-							Outcome::Error((Status::Unauthorized, "Session expired".to_string()))
-						}
-					}
-				} else {
-					Outcome::Error((Status::Unauthorized, "Invalid Token".to_string()))
-				}
-			}
-			_ => Outcome::Error((
-				Status::Unauthorized,
-				"Authorization header missing".to_string(),
+
+		let header = match auth_header {
+			Some(h) if h.starts_with("Bearer ") => h,
+			_ => return Outcome::Error((Status::Unauthorized, "Authorization header missing".to_string())),
+		};
+
+		let jwt = header.trim_start_matches("Bearer ");
+
+		if !validate_jwt(jwt) {
+			return Outcome::Error((Status::Unauthorized, "Invalid Token".to_string()));
+		}
+
+		let auth_guard = match Self::from_raw_jwt(jwt) {
+			Ok(guard) => guard,
+			Err(e) => return Outcome::Error((
+				Status::InternalServerError,
+				format!("Error while getting the jwt information: {e}")
 			)),
+		};
+
+		if auth_guard.user_type == UserType::Admin {
+			return Outcome::Success(auth_guard);
+		}
+
+		match session_exist(&auth_guard.session_id) {
+			Ok(true) => Outcome::Success(auth_guard),
+			Ok(false) => Outcome::Error((Status::Unauthorized, "Session expired".to_string())),
+			Err(e) => Outcome::Error((e, "Error while checking session".to_string())),
 		}
 	}
 }
