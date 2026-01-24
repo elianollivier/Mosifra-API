@@ -181,7 +181,7 @@ mod tests {
 
 	#[test]
 	fn test_invalid_jwt_format() {
-		std::env::set_var("JWT_SECRET", "testsecret123456");
+		unsafe { std::env::set_var("JWT_SECRET", "testsecret123456"); }
 		assert!(!validate_jwt("not.a.valid.jwt"));
 		assert!(!validate_jwt(""));
 		assert!(!validate_jwt("random_string"));
@@ -189,7 +189,7 @@ mod tests {
 
 	#[test]
 	fn test_jwt_wrong_signature() {
-		std::env::set_var("JWT_SECRET", "testsecret123456");
+		unsafe { std::env::set_var("JWT_SECRET", "testsecret123456"); }
 		let fake_jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.wrongsignature";
 		assert!(!validate_jwt(fake_jwt));
 	}
