@@ -7,6 +7,7 @@ use crate::{
     models::courses::Internship,
     postgres::Db,
     utils::crypto::{hash_password, verify_password},
+    utils::validation::{validate_email, validate_password},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -70,6 +71,9 @@ impl Company {
 #[async_trait]
 impl Db for Company {
     async fn insert(&self) -> Result<(), Status> {
+        validate_password(&self.password)?;
+        validate_email(&self.mail)?;
+
         let client = Self::setup_database().await?;
         let password_hash = hash_password(&self.password)?;
         let id = Uuid::new_v4().to_string();

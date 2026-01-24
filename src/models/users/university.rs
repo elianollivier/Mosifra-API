@@ -6,6 +6,7 @@ use crate::{
 	models::courses::{Class, CourseType, Internship},
 	postgres::Db,
 	utils::crypto::{hash_password, verify_password},
+	utils::validation::{validate_email, validate_password},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -22,6 +23,9 @@ pub struct University {
 #[async_trait]
 impl Db for University {
 	async fn insert(&self) -> Result<(), Status> {
+		validate_password(&self.password)?;
+		validate_email(&self.mail)?;
+
 		let client = Self::setup_database().await?;
 		let password_hash = hash_password(&self.password)?;
 

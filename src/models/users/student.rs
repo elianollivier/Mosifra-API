@@ -71,11 +71,6 @@ impl Student {
 			last_name,
 		};
 
-		println!("==========DEBUG==========");
-		println!("login : {}", student.login);
-		println!("password : {}", student.password);
-		println!("==========DEBUG==========");
-
 		Ok(student)
 	}
 
