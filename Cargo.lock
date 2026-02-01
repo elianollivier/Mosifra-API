@@ -29,6 +29,8 @@ dependencies = [
  "sha2",
  "tokio",
  "tokio-postgres",
+ "tracing",
+ "tracing-subscriber",
  "uuid",
 ]
 

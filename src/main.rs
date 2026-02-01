@@ -6,6 +6,8 @@ use rocket::{
 	http::Method,
 };
 use rocket_cors::{AllowedOrigins, CorsOptions};
+use tracing::{info, Level};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 use routes::{
 	auth::{check_session, login_route, logout_route, twofa_route},
 	courses::{
@@ -49,12 +51,27 @@ struct Environment {
 
 #[launch]
 fn rocket() -> _ {
+	// Initialize the tracing subscriber for logging
+	// Log level can be configured via RUST_LOG env variable
+	// Examples: RUST_LOG=debug, RUST_LOG=mosifra_api=debug,rocket=info
+	tracing_subscriber::registry()
+		.with(fmt::layer().with_target(true).with_level(true))
+		.with(
+			EnvFilter::try_from_default_env()
+				.unwrap_or_else(|_| EnvFilter::new("info"))
+		)
+		.init();
+
+	info!("🚀 Starting Mosifra API server...");
+
 	let env: Environment = Figment::from(Env::raw().only(&["rocket_secret", "api_port"]))
 		.extract()
 		.unwrap_or_else(|e| {
 			eprintln!("Error while trying to get the env: {e}");
 			exit(1);
 		});
+
+	info!(port = env.api_port, "Server configuration loaded");
 
 	let rocket = rocket::custom(Config::from(
 		Config::figment()
