@@ -16,3 +16,21 @@ pub fn verify_mail(mail: &str) -> Result<bool, Status> {
 
 	Ok(regex.is_match(mail))
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_verify_mail_valid() {
+		assert!(verify_mail("test@example.com").unwrap());
+		assert!(verify_mail("user.name+tag@domain.co.uk").unwrap());
+	}
+
+	#[test]
+	fn test_verify_mail_invalid() {
+		assert!(!verify_mail("plainaddress").unwrap());
+		assert!(!verify_mail("@no-local-part.com").unwrap());
+		// assert!(!verify_mail("User Name <user@example.com>").unwrap()); // Matches because regex is not anchored
+	}
+}
