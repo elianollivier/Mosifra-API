@@ -19,36 +19,36 @@ pub async fn get_internships(
 	let generic_user = auth.get_generic_user().await?;
 	let payload = get_internships_payload.into_inner();
 
-	if generic_user.is_university()
-		&& let Some(course_types) = payload.course_types
-	{
-		let internships = Internship::get_all_based_on_course_types(course_types).await?;
-
-		Ok(Json(GetInternshipsResponse {
-			success: true,
-			internships,
-		}))
-	} else if generic_user.is_student()
-		&& let Some(course_types) = payload.course_types
-		&& course_types.len() == 1
-	{
-		let course_type = course_types.index(0);
-		let student = generic_user.to_student()?;
-		let class = student
-			.get_class()
-			.await?
-			.internal_server_error("Student has no class (Should not be possible)")?;
-		if class.course_type == *course_type {
+	if generic_user.is_university() {
+		if let Some(course_types) = payload.course_types {
 			let internships = Internship::get_all_based_on_course_types(course_types).await?;
 
-			Ok(Json(GetInternshipsResponse {
+			return Ok(Json(GetInternshipsResponse {
 				success: true,
 				internships,
-			}))
-		} else {
-			Err(Status::Unauthorized)
+			}));
 		}
-	} else {
-		Err(Status::Unauthorized)
+	} else if generic_user.is_student() {
+		if let Some(course_types) = payload.course_types {
+			if course_types.len() == 1 {
+				let course_type = course_types.index(0);
+				let student = generic_user.to_student()?;
+				let class = student
+					.get_class()
+					.await?
+					.internal_server_error("Student has no class (Should not be possible)")?;
+				if class.course_type == *course_type {
+					let internships = Internship::get_all_based_on_course_types(course_types).await?;
+
+					return Ok(Json(GetInternshipsResponse {
+						success: true,
+						internships,
+					}));
+				}
+			}
+		}
 	}
+	
+	Err(Status::Unauthorized)
 }
+
