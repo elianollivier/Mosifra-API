@@ -64,3 +64,84 @@ impl GenericUser {
 		Ok(Json(DisconnectResponse { success: true }))
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_generic_user_admin_type_check() {
+		let admin = Admin::default();
+		let generic_user = GenericUser::new(admin, "test_session".to_string());
+		
+		assert!(generic_user.is_admin());
+		assert!(!generic_user.is_student());
+		assert!(!generic_user.is_university());
+		assert!(!generic_user.is_company());
+	}
+
+	#[test]
+	fn test_generic_user_admin_conversion() {
+		let admin = Admin::default();
+		let generic_user = GenericUser::new(admin, "test_session".to_string());
+		
+		assert!(generic_user.to_admin().is_ok());
+		assert!(generic_user.to_student().is_err());
+		assert!(generic_user.to_university().is_err());
+		assert!(generic_user.to_company().is_err());
+	}
+
+	#[test]
+	fn test_generic_user_student_type_check() {
+		let student = Student {
+			id: "test_id".to_string(),
+			login: "test_login".to_string(),
+			password: "test_password".to_string(),
+			mail: "test@example.com".to_string(),
+			first_name: "Test".to_string(),
+			last_name: "User".to_string(),
+		};
+		let generic_user = GenericUser::new(student, "test_session".to_string());
+		
+		assert!(generic_user.is_student());
+		assert!(!generic_user.is_admin());
+		assert!(!generic_user.is_university());
+		assert!(!generic_user.is_company());
+	}
+
+	#[test]
+	fn test_generic_user_student_conversion() {
+		let student = Student {
+			id: "test_id".to_string(),
+			login: "test_login".to_string(),
+			password: "test_password".to_string(),
+			mail: "test@example.com".to_string(),
+			first_name: "Test".to_string(),
+			last_name: "User".to_string(),
+		};
+		let generic_user = GenericUser::new(student, "test_session".to_string());
+		
+		assert!(generic_user.to_student().is_ok());
+		assert!(generic_user.to_admin().is_err());
+		assert!(generic_user.to_university().is_err());
+		assert!(generic_user.to_company().is_err());
+	}
+
+	#[test]
+	fn test_generic_user_student_data_integrity() {
+		let student = Student {
+			id: "test_id".to_string(),
+			login: "test_login".to_string(),
+			password: "test_password".to_string(),
+			mail: "test@example.com".to_string(),
+			first_name: "Test".to_string(),
+			last_name: "User".to_string(),
+		};
+		let generic_user = GenericUser::new(student, "test_session".to_string());
+		
+		let retrieved_student = generic_user.to_student().unwrap();
+		assert_eq!(retrieved_student.id, "test_id");
+		assert_eq!(retrieved_student.login, "test_login");
+		assert_eq!(retrieved_student.mail, "test@example.com");
+	}
+}

@@ -42,3 +42,64 @@ impl<T> StatusOptionHandling<T> for Option<T> {
 		}
 	}
 }
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn test_result_internal_server_error_ok() {
+		let result: Result<i32, &str> = Ok(42);
+		let handled = result.internal_server_error("Test error");
+		assert!(handled.is_ok());
+		assert_eq!(handled.unwrap(), 42);
+	}
+
+	#[test]
+	fn test_result_internal_server_error_err() {
+		let result: Result<i32, &str> = Err("Something went wrong");
+		let handled = result.internal_server_error("Test error");
+		assert!(handled.is_err());
+		assert_eq!(handled.unwrap_err(), Status::InternalServerError);
+	}
+
+	#[test]
+	fn test_result_internal_server_error_no_message_ok() {
+		let result: Result<String, &str> = Ok("success".to_string());
+		let handled = result.internal_server_error_no_message();
+		assert!(handled.is_ok());
+		assert_eq!(handled.unwrap(), "success");
+	}
+
+	#[test]
+	fn test_result_internal_server_error_no_message_err() {
+		let result: Result<String, &str> = Err("failure");
+		let handled = result.internal_server_error_no_message();
+		assert!(handled.is_err());
+		assert_eq!(handled.unwrap_err(), Status::InternalServerError);
+	}
+
+	#[test]
+	fn test_option_internal_server_error_some() {
+		let option: Option<i32> = Some(100);
+		let handled = option.internal_server_error("No value found");
+		assert!(handled.is_ok());
+		assert_eq!(handled.unwrap(), 100);
+	}
+
+	#[test]
+	fn test_option_internal_server_error_none() {
+		let option: Option<i32> = None;
+		let handled = option.internal_server_error("No value found");
+		assert!(handled.is_err());
+		assert_eq!(handled.unwrap_err(), Status::InternalServerError);
+	}
+
+	#[test]
+	fn test_option_with_complex_type() {
+		let option: Option<Vec<String>> = Some(vec!["test".to_string()]);
+		let handled = option.internal_server_error("Vector not found");
+		assert!(handled.is_ok());
+		assert_eq!(handled.unwrap(), vec!["test".to_string()]);
+	}
+}
